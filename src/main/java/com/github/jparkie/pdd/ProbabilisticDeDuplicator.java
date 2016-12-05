@@ -28,7 +28,7 @@ public interface ProbabilisticDeDuplicator {
     boolean classifyDistinct(byte[] element);
 
     /**
-     * Probabilistically peeks whether a given element is contained in the {@link ProbabilisticDeDuplicator}.
+     * Probabilistically peeks whether a given element is a distinct or a duplicate element.
      * This operation does not record the result into its history.
      *
      * @param element An element from an unbounded sequence.

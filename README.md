@@ -61,11 +61,11 @@ System.out.println(deDuplicator.classifyDistinct("Hello".getBytes()));
 // Output: false
 System.out.println(deDuplicator.classifyDistinct("Hello".getBytes()));
 
-// Probabilistically peeks whether a given element is contained in the ProbabilisticDeDuplicator.
+// Probabilistically peeks whether a given element is a distinct or a duplicate element.
 // This operation does not record the result into its history.
-// Output: false
+// Output: true
 System.out.println(deDuplicator.peekDistinct("World".getBytes()));
-// Output: false
+// Output: true
 System.out.println(deDuplicator.peekDistinct("World".getBytes()));
 
 // Reset the history of the ProbabilisticDeDuplicator.
