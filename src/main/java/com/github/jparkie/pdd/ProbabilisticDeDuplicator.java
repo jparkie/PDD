@@ -32,7 +32,7 @@ public interface ProbabilisticDeDuplicator {
      * This operation does not record the result into its history.
      *
      * @param element An element from an unbounded sequence.
-     * @return True if the element is contained in the {@link ProbabilisticDeDuplicator}; otherwise, false.
+     * @return True if the element is a distinct element; otherwise, false if the element is a duplicate element.
      */
     boolean peekDistinct(byte[] element);
 
