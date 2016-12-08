@@ -1,8 +1,20 @@
 apply plugin: 'java'
 apply plugin: 'jacoco'
+apply plugin: "me.champeau.gradle.jmh"
 apply from: 'maven-push.gradle'
 
 sourceCompatibility = 1.8
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.3.1"
+    }
+}
 
 repositories {
     mavenCentral()
