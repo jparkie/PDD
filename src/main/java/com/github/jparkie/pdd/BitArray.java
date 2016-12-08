@@ -39,12 +39,16 @@ public final class BitArray {
     }
 
     public boolean get(long index) {
-        return (data[(int) (index >>> 6)] & (1L << index)) != 0;
+        final int arrayIndex = (int)(index >>> 6);
+        final long bitMask = 1L << index;
+        return (data[arrayIndex] & bitMask) != 0;
     }
 
     public boolean set(long index) {
-        if (!get(index)) {
-            data[(int) (index >>> 6)] |= (1L << index);
+        final int arrayIndex = (int)(index >>> 6);
+        final long bitMask = 1L << index;
+        if ((data[arrayIndex] & bitMask) == 0) {
+            data[arrayIndex] |= bitMask;
             bitCount++;
             return true;
         }
@@ -52,8 +56,10 @@ public final class BitArray {
     }
 
     public boolean clear(long index) {
-        if (get(index)) {
-            data[(int) (index >>> 6)] &= ~(1L << index);
+        final int arrayIndex = (int)(index >>> 6);
+        final long bitMask = 1L << index;
+        if ((data[arrayIndex] & bitMask) != 0) {
+            data[arrayIndex] &= ~bitMask;
             bitCount--;
             return true;
         }
