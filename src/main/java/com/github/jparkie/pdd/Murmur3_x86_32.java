@@ -21,7 +21,7 @@ package com.github.jparkie.pdd;
 /**
  * Copied From: https://github.com/apache/spark/blob/branch-2.0/common/sketch/src/main/java/org/apache/spark/util/sketch/Murmur3_x86_32.java
  *
- * 32-bit Murmur3 hasher.  This is based on Guava's Murmur3_32HashFunction.
+ * 32-bit Murmur3 hasher. This is based on Guava's Murmur3_32HashFunction.
  */
 public final class Murmur3_x86_32 {
     private static final int C1 = 0xcc9e2d51;
