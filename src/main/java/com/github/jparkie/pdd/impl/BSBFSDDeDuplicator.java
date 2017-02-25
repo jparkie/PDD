@@ -10,7 +10,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.SplittableRandom;
 
 /**
  * De-Duplication by a Biased Sampling based Bloom Filter with Single Deletion (BSBFSD).
@@ -28,6 +28,7 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
     BitArray[] bloomFilters;
 
     private transient int[] hashBuffer;
+    private transient SplittableRandom random;
 
     public BSBFSDDeDuplicator(long numBits, int numHashFunctions) {
         this(numBits, numHashFunctions, bloomFilters(numBits, numHashFunctions));
@@ -38,6 +39,7 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
         this.numHashFunctions = numHashFunctions;
         this.bloomFilters = bloomFilters;
         this.hashBuffer = new int[this.bloomFilters.length];
+        this.random = new SplittableRandom(generateRandomSeed(numBits, numHashFunctions));
     }
 
     private BSBFSDDeDuplicator() {
@@ -74,6 +76,10 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
             bloomFilters[index] = new BitArray(bloomFilterBits);
         }
         return bloomFilters;
+    }
+
+    private static long generateRandomSeed(long numBits, int numHashFunctions) {
+        return 31L * numBits  + numHashFunctions;
     }
 
     @Override
@@ -114,7 +120,7 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
         fillHashBuffer(element, hashBuffer);
         final boolean temporaryIsDistinct = !containsHashBuffer(bloomFilters, hashBuffer);
         if (temporaryIsDistinct) {
-            setHashBuffer(bloomFilters, hashBuffer);
+            setHashBuffer(bloomFilters, hashBuffer, random);
         }
         return temporaryIsDistinct;
     }
@@ -162,10 +168,10 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
         return true;
     }
 
-    private void setHashBuffer(BitArray[] bloomFilters, int[] hashBuffer) {
+    private void setHashBuffer(BitArray[] bloomFilters, int[] hashBuffer, SplittableRandom random) {
         final int hashBufferLength = hashBuffer.length;
-        final BitArray randomBloomFilter = bloomFilters[ThreadLocalRandom.current().nextInt(hashBufferLength)];
-        randomBloomFilter.clear(ThreadLocalRandom.current().nextLong(randomBloomFilter.bitSize()));
+        final BitArray randomBloomFilter = bloomFilters[random.nextInt(hashBufferLength)];
+        randomBloomFilter.clear(random.nextLong(randomBloomFilter.bitSize()));
         for (int index = 0; index < hashBufferLength; index++) {
             final int combinedHash = hashBuffer[index];
             final BitArray bloomFilter = bloomFilters[index];
@@ -215,5 +221,6 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
         this.numHashFunctions = tempDeDuplicator.numHashFunctions;
         this.bloomFilters = tempDeDuplicator.bloomFilters;
         this.hashBuffer = new int[this.bloomFilters.length];
+        this.random = new SplittableRandom(generateRandomSeed(this.numBits, this.numHashFunctions));
     }
 }
