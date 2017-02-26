@@ -4,11 +4,19 @@ import com.github.jparkie.pdd.BitArray;
 import org.junit.Test;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 import static org.junit.Assert.*;
 
 public class BSBFDeDuplicatorTest {
+    private static final double FPP_DELTA = 1E-3;
+    private static final double FNP_DELTA = 1E-2;
+    private static final long NUM_BITS = 512 * 8L;
+    private static final long RANDOM_SEED = 13L;
+    private static final int CARDINALITY = (int) 1E3;
+    private static final int MAX_SEQUENCE_NUMBER = (int) 1E6;
+
     @Test(expected = IllegalArgumentException.class)
     public void testCreateFppLowerBound() {
         BSBFDeDuplicator.create(64L, 0);
@@ -66,6 +74,54 @@ public class BSBFDeDuplicatorTest {
     }
 
     @Test
+    public void testEstimateFpp() {
+        final BSBFDeDuplicator deDuplicator = new BSBFDeDuplicator(NUM_BITS, 2);
+        final Random random = new Random(RANDOM_SEED);
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES);
+        final boolean[] isVisited = new boolean[CARDINALITY];
+        int fpNumber = 0;
+        for (long sequenceNumber = 1; sequenceNumber <= MAX_SEQUENCE_NUMBER; sequenceNumber++) {
+            final int currentElement = random.nextInt(CARDINALITY);
+            byteBuffer.clear();
+            byteBuffer.putInt(currentElement);
+            final boolean actuallyDistinct = !isVisited[currentElement];
+            final boolean reportedDuplicate = !deDuplicator.classifyDistinct(byteBuffer.array());
+            if (actuallyDistinct && reportedDuplicate) {
+                fpNumber++;
+            }
+            isVisited[currentElement] = true;
+        }
+        final double actuallyDistinctProbability = Math.pow((CARDINALITY - 1D) / CARDINALITY, MAX_SEQUENCE_NUMBER);
+        final double actualFpp = ((double) fpNumber) / ((double) MAX_SEQUENCE_NUMBER);
+        final double estimatedFpp = deDuplicator.estimateFpp(actuallyDistinctProbability);
+        assertEquals(actualFpp, estimatedFpp, FPP_DELTA);
+    }
+
+    @Test
+    public void testEstimateFnp() {
+        final BSBFDeDuplicator deDuplicator = new BSBFDeDuplicator(NUM_BITS, 2);
+        final Random random = new Random(RANDOM_SEED);
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES);
+        final boolean[] isVisited = new boolean[CARDINALITY];
+        int fnNumber = 0;
+        for (long sequenceNumber = 1; sequenceNumber <= MAX_SEQUENCE_NUMBER; sequenceNumber++) {
+            final int currentElement = random.nextInt(CARDINALITY);
+            byteBuffer.clear();
+            byteBuffer.putInt(currentElement);
+            final boolean actuallyDuplicate = isVisited[currentElement];
+            final boolean reportedDistinct = deDuplicator.classifyDistinct(byteBuffer.array());
+            if (actuallyDuplicate && reportedDistinct) {
+                fnNumber++;
+            }
+            isVisited[currentElement] = true;
+        }
+        final double actuallyDistinctProbability = Math.pow((CARDINALITY - 1D) / CARDINALITY, MAX_SEQUENCE_NUMBER);
+        final double actualFnp = ((double) fnNumber) / ((double) MAX_SEQUENCE_NUMBER);
+        final double estimatedFnp = deDuplicator.estimateFnp(actuallyDistinctProbability);
+        assertEquals(actualFnp, estimatedFnp, FNP_DELTA);
+    }
+
+    @Test
     public void testReset() {
         final BSBFDeDuplicator deDuplicator = new BSBFDeDuplicator(64L, 2);
         final Random random = new Random();
@@ -76,6 +132,7 @@ public class BSBFDeDuplicatorTest {
         for (BitArray bloomFilter : deDuplicator.bloomFilters) {
             assertEquals(0L, bloomFilter.bitCount());
         }
+        assertEquals(0D, deDuplicator.reportedDuplicateProbability, 0);
     }
 
     @Test

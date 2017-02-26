@@ -37,6 +37,20 @@ public interface ProbabilisticDeDuplicator {
     boolean peekDistinct(byte[] element);
 
     /**
+     * The probability that a distinct element of the stream is reported as duplicate.
+     * @param actuallyDistinctProbability The probability that the next element is actually distinct.
+     * @return The estimated false positive probability between 0 and 1.
+     */
+    double estimateFpp(double actuallyDistinctProbability);
+
+    /**
+     * The probability that a duplicate element of the stream is reported as distinct.
+     * @param actuallyDistinctProbability The probability that the next element is actually distinct.
+     * @return The estimated false negative probability between 0 and 1.
+     */
+    double estimateFnp(double actuallyDistinctProbability);
+
+    /**
      * Reset the history of the {@link ProbabilisticDeDuplicator}.
      */
     void reset();

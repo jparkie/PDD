@@ -1,5 +1,6 @@
 package com.github.jparkie.pdd.impl;
 
+import com.github.jparkie.pdd.ProbabilisticDeDuplicatorSerializer;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -12,8 +13,27 @@ import static org.junit.Assert.assertTrue;
 
 public class BSBFSDDeDuplicatorSerializerTest {
     @Test
-    public void testWriteToReadFrom() throws IOException {
-        final BSBFSDDeDuplicatorSerializer serializer = new BSBFSDDeDuplicatorSerializer();
+    public void testWriteToReadFromVersion1() throws IOException {
+        final ProbabilisticDeDuplicatorSerializer<BSBFSDDeDuplicator> serializer =
+                BSBFSDDeDuplicatorSerializers.VERSION_1;
+        final BSBFSDDeDuplicator deDuplicator = new BSBFSDDeDuplicator(64L, 1);
+        final Random random = new Random();
+        final byte[] element = new byte[128];
+        random.nextBytes(element);
+        assertTrue(deDuplicator.classifyDistinct(element));
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        serializer.writeTo(deDuplicator, out);
+        out.close();
+        final ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        final BSBFSDDeDuplicator serialized = serializer.readFrom(in);
+        in.close();
+        assertEquals(deDuplicator, serialized);
+    }
+
+    @Test
+    public void testWriteToReadFromVersion2() throws IOException {
+        final ProbabilisticDeDuplicatorSerializer<BSBFSDDeDuplicator> serializer =
+                BSBFSDDeDuplicatorSerializers.VERSION_2;
         final BSBFSDDeDuplicator deDuplicator = new BSBFSDDeDuplicator(64L, 1);
         final Random random = new Random();
         final byte[] element = new byte[128];

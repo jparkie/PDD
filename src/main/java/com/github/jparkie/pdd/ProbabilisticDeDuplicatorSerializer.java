@@ -13,7 +13,7 @@ public interface ProbabilisticDeDuplicatorSerializer<T extends ProbabilisticDeDu
     /**
      * The binary format version this serializer will write and read.
      */
-    byte version();
+    int version();
 
     /**
      * Writes out this {@link ProbabilisticDeDuplicator} to an output stream in binary format. It is the caller's

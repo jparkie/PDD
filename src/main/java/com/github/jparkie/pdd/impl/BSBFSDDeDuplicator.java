@@ -21,23 +21,29 @@ import java.util.SplittableRandom;
  * https://arxiv.org/abs/1212.3964
  */
 public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializable {
-    private static final BSBFSDDeDuplicatorSerializer serializer = new BSBFSDDeDuplicatorSerializer();
-
     long numBits;
     int numHashFunctions;
     BitArray[] bloomFilters;
+
+    double reportedDuplicateProbability;
 
     private transient int[] hashBuffer;
     private transient SplittableRandom random;
 
     public BSBFSDDeDuplicator(long numBits, int numHashFunctions) {
-        this(numBits, numHashFunctions, bloomFilters(numBits, numHashFunctions));
+        this(numBits, numHashFunctions, bloomFilters(numBits, numHashFunctions), 0D);
     }
 
-    BSBFSDDeDuplicator(long numBits, int numHashFunctions, BitArray[] bloomFilters) {
+    BSBFSDDeDuplicator(
+            long numBits,
+            int numHashFunctions,
+            BitArray[] bloomFilters,
+            double reportedDuplicateProbability
+    ) {
         this.numBits = numBits;
         this.numHashFunctions = numHashFunctions;
         this.bloomFilters = bloomFilters;
+        this.reportedDuplicateProbability = reportedDuplicateProbability;
         this.hashBuffer = new int[this.bloomFilters.length];
         this.random = new SplittableRandom(generateRandomSeed(numBits, numHashFunctions));
     }
@@ -79,7 +85,7 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
     }
 
     private static long generateRandomSeed(long numBits, int numHashFunctions) {
-        return 31L * numBits  + numHashFunctions;
+        return 31L * numBits + numHashFunctions;
     }
 
     @Override
@@ -122,6 +128,7 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
         if (temporaryIsDistinct) {
             setHashBuffer(bloomFilters, hashBuffer, random);
         }
+        updateReportedDuplicateProbability();
         return temporaryIsDistinct;
     }
 
@@ -132,11 +139,22 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
     }
 
     @Override
+    public double estimateFpp(double actuallyDistinctProbability) {
+        return actuallyDistinctProbability * reportedDuplicateProbability;
+    }
+
+    @Override
+    public double estimateFnp(double actuallyDistinctProbability) {
+        return (1 - actuallyDistinctProbability) * (1 - reportedDuplicateProbability);
+    }
+
+    @Override
     public void reset() {
         final int bloomFiltersLength = bloomFilters.length;
         for (int index = 0; index < bloomFiltersLength; index++) {
             bloomFilters[index] = new BitArray(bloomFilters[index].bitSize());
         }
+        reportedDuplicateProbability = 0D;
     }
 
     private void fillHashBuffer(byte[] element, int[] hashBuffer) {
@@ -179,6 +197,21 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
         }
     }
 
+    private void updateReportedDuplicateProbability() {
+        /*
+         * X_{m+1} = \left[ \left(X_m\right)^{\frac{1}{k}} \left\{ X_m + \left( 1 - X_m \right) \left( 1 - \frac{1}{ks}
+         * \right) \right\} + \left( 1 - X_m \right) \frac{1}{s} \right]^k
+         */
+        final double K = bloomFilters.length;
+        final double S = bloomFilters[0].bitSize();
+        final double X = reportedDuplicateProbability;
+        final double calculation1 = Math.pow(X, 1D / K);
+        final double calculation2 = X + (1D - X) * (1D - (1D / (K * S)));
+        final double calculation3 = (1D - X) * (1D / S);
+        final double calculation4 = calculation1 * calculation2 + calculation3;
+        reportedDuplicateProbability = Math.pow(calculation4, K);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -211,12 +244,12 @@ public class BSBFSDDeDuplicator implements ProbabilisticDeDuplicator, Serializab
 
     // http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html
     private void writeObject(ObjectOutputStream out) throws IOException {
-        serializer.writeTo(this, out);
+        BSBFSDDeDuplicatorSerializers.VERSION_2.writeTo(this, out);
     }
 
     // http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        final BSBFSDDeDuplicator tempDeDuplicator = serializer.readFrom(in);
+        final BSBFSDDeDuplicator tempDeDuplicator = BSBFSDDeDuplicatorSerializers.VERSION_2.readFrom(in);
         this.numBits = tempDeDuplicator.numBits;
         this.numHashFunctions = tempDeDuplicator.numHashFunctions;
         this.bloomFilters = tempDeDuplicator.bloomFilters;
