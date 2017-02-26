@@ -84,7 +84,13 @@ deDuplicator.reset();
 PDD provides serializers for each `ProbabilisticDeDuplicator` implementation to write to and to read from a versioned binary format.
 
 ```java
+// After Version 0.1.2:
+// final ProbabilisticDeDuplicatorSerializer<RLBSBFDeDuplicator> serializer =
+//                 RLBSBFDeDuplicatorSerializers.VERSION_2;
+
+// Before Version 0.1.2:
 final RLBSBFDeDuplicatorSerializer serializer = new RLBSBFDeDuplicatorSerializer();
+
 final RLBSBFDeDuplicator deDuplicator = new RLBSBFDeDuplicator(64L, 1);
 final Random random = new Random();
 final byte[] element = new byte[128];
