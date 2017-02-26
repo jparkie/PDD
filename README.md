@@ -68,6 +68,13 @@ System.out.println(deDuplicator.peekDistinct("World".getBytes()));
 // Output: true
 System.out.println(deDuplicator.peekDistinct("World".getBytes()));
 
+// Version 0.1.2+: Calculate the probability that a distinct element of the stream is reported as duplicate.
+// Output: Probability between 0 and 1.
+System.out.println(deDuplicator.estimateFpp(actuallyDistinctProbability));
+// Version 0.1.2+: Calculate the probability that a duplicate element of the stream is reported as distinct.
+// Output: Probability between 0 and 1.
+System.out.println(deDuplicator.estimateFnp(actuallyDistinctProbability));
+
 // Reset the history of the ProbabilisticDeDuplicator.
 deDuplicator.reset();
 ```
