@@ -17,11 +17,19 @@ Accordingly, this library implements three novel Bloom Filter algorithms from th
   <artifactId>pdd</artifactId>
   <version>0.1.1</version>
 </dependency>
+
+<dependency>
+  <groupId>com.github.jparkie</groupId>
+  <artifactId>pdd</artifactId>
+  <version>0.1.2-SNAPSHOT</version>
+</dependency>
 ```
 
 **Gradle**
 ```
 compile 'com.github.jparkie:pdd:0.1.1'
+
+compile 'com.github.jparkie:pdd:0.1.2-SNAPSHOT'
 ```
 
 ## Usage
