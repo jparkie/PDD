@@ -9,6 +9,7 @@ public enum BSBFDeDuplicatorSerializers implements ProbabilisticDeDuplicatorSeri
     VERSION_1(1) {
         @Override
         public void writeTo(BSBFDeDuplicator probabilisticDeDuplicator, OutputStream out) throws IOException {
+            /* Commented for reference; TODO: Remove the next version.
             final DataOutputStream dos = new DataOutputStream(out);
             dos.writeByte(version());
             dos.writeLong(probabilisticDeDuplicator.numBits);
@@ -16,6 +17,10 @@ public enum BSBFDeDuplicatorSerializers implements ProbabilisticDeDuplicatorSeri
             for (BitArray bloomFilter : probabilisticDeDuplicator.bloomFilters) {
                 bloomFilter.writeTo(dos);
             }
+            */
+            final String error =
+                    "A BSBFDeDuplicatorSerializers can no longer be serialized by the VERSION_1 scheme.";
+            throw new UnsupportedOperationException(error);
         }
 
         @Override
@@ -28,7 +33,7 @@ public enum BSBFDeDuplicatorSerializers implements ProbabilisticDeDuplicatorSeri
                         serializedVersion,
                         version()
                 );
-                throw new IllegalArgumentException(error);
+                throw new IOException(error);
             }
             final long numBits = dis.readLong();
             final int numHashFunctions = dis.readInt();
@@ -43,7 +48,7 @@ public enum BSBFDeDuplicatorSerializers implements ProbabilisticDeDuplicatorSeri
         @Override
         public void writeTo(BSBFDeDuplicator probabilisticDeDuplicator, OutputStream out) throws IOException {
             final DataOutputStream dos = new DataOutputStream(out);
-            dos.writeByte(version());
+            dos.writeInt(version());
             dos.writeLong(probabilisticDeDuplicator.numBits);
             dos.writeInt(probabilisticDeDuplicator.numHashFunctions);
             for (BitArray bloomFilter : probabilisticDeDuplicator.bloomFilters) {
@@ -55,14 +60,14 @@ public enum BSBFDeDuplicatorSerializers implements ProbabilisticDeDuplicatorSeri
         @Override
         public BSBFDeDuplicator readFrom(InputStream in) throws IOException {
             final DataInputStream dis = new DataInputStream(in);
-            final byte serializedVersion = dis.readByte();
+            final int serializedVersion = dis.readInt();
             if (serializedVersion != version()) {
                 final String error = String.format(
                         "Unexpected ProbabilisticDeDuplicator version number (%d), expected %d",
                         serializedVersion,
                         version()
                 );
-                throw new IllegalArgumentException(error);
+                throw new IOException(error);
             }
             final long numBits = dis.readLong();
             final int numHashFunctions = dis.readInt();
