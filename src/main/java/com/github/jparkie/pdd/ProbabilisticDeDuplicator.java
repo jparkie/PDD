@@ -38,6 +38,7 @@ public interface ProbabilisticDeDuplicator {
 
     /**
      * The probability that a distinct element of the stream is reported as duplicate.
+     *
      * @param actuallyDistinctProbability The probability that the next element is actually distinct.
      * @return The estimated false positive probability between 0 and 1.
      */
@@ -45,6 +46,7 @@ public interface ProbabilisticDeDuplicator {
 
     /**
      * The probability that a duplicate element of the stream is reported as distinct.
+     *
      * @param actuallyDistinctProbability The probability that the next element is actually distinct.
      * @return The estimated false negative probability between 0 and 1.
      */
